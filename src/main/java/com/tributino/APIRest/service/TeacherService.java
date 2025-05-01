@@ -2,16 +2,23 @@ package com.tributino.APIRest.service;
 
 import com.tributino.APIRest.dto.TeacherDTO;
 import com.tributino.APIRest.model.ClassStudant;
+import com.tributino.APIRest.model.School;
+import com.tributino.APIRest.model.Studant;
 import com.tributino.APIRest.model.Teacher;
 
+import java.util.List;
+
 public interface TeacherService {
-    Iterable<ClassStudant> fetchAll();
 
-    void insert(ClassStudant classStudant);
+    List<Studant> findStudantsByTeacherId(String cpf);
 
-    void update(Long id, ClassStudant classStudant);
+    ClassStudant findClassByTeacherId(String cpf);
 
-    void delete(Long id);
+    School findSchoolByTeacherId(String cpf);
+
+    void update(String cpf, TeacherDTO dto);
+
+    void delete(String cpf);
 
     Teacher findById(String cpf);
 

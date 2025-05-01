@@ -2,12 +2,19 @@ package com.tributino.APIRest.service.impl;
 
 import com.tributino.APIRest.dto.ClassStudantDTO;
 import com.tributino.APIRest.model.ClassStudant;
+import com.tributino.APIRest.model.School;
+import com.tributino.APIRest.model.Studant;
+import com.tributino.APIRest.model.Teacher;
 import com.tributino.APIRest.repository.ClassStudantRepository;
+import com.tributino.APIRest.repository.SchoolRepository;
+import com.tributino.APIRest.repository.TeacherRepository;
 import com.tributino.APIRest.service.ClassStudantService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -16,14 +23,24 @@ public class ClassStudantServiceImpl implements ClassStudantService {
     @Autowired
     private ClassStudantRepository classStudantRepository;
 
+    @Autowired
+    private TeacherRepository teacherRepository;
+
+    @Autowired
+    private SchoolRepository schoolRepository;
+
     @Override
-    public Iterable<ClassStudant> fetchAll() {
-        return classStudantRepository.findAll();
+    public List<Studant> findStudantsByClassId(Long id) {
+        ClassStudant turma = classStudantRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada"));
+        return turma.getStudantsClass();
     }
 
     @Override
-    public void insert(ClassStudant classStudant) {
-        classStudantRepository.save(classStudant); // Corrigido: estava usando "ClassStudant" com C maiúsculo (nome da classe, não da variável)
+    public Teacher findTeacherByClassId(Long id) {
+        ClassStudant turma = classStudantRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada"));
+        return turma.getTeacher();
     }
 
     @Override
@@ -31,7 +48,6 @@ public class ClassStudantServiceImpl implements ClassStudantService {
         ClassStudant existing = classStudantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada"));
 
-        // Atualiza os campos necessários
         existing.setGrade(classStudant.getGrade());
         existing.setSchool(classStudant.getSchool());
         existing.setTeacher(classStudant.getTeacher());
@@ -41,37 +57,28 @@ public class ClassStudantServiceImpl implements ClassStudantService {
     }
 
     @Override
-    public void delete(Long id) {
-        ClassStudant turma = classStudantRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada"));
-
-        // Desassocia os estudantes da turma
-        if (turma.getStudantsClass() != null) {
-            turma.getStudantsClass().forEach(s -> s.setClassStudant(null));
-        }
-
-        // Desassocia o professor da turma
-        if (turma.getTeacher() != null) {
-            turma.getTeacher().setClassStudant(null);
-        }
-
-        classStudantRepository.delete(turma);
-    }
-
-    @Override
     public ClassStudant findById(Long id) {
         return classStudantRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada"));
     }
 
     @Override
-    public ClassStudant create(ClassStudantDTO classStudantDTO) {
-        // Aqui você pode mapear os dados do DTO para a entidade, se estiver usando DTOs corretamente
+    @Transactional
+    public ClassStudant create(ClassStudantDTO dto) {
+        Teacher teacher = teacherRepository.findById(dto.getTeacherCpf())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Teacher not found with cpf: " + dto.getTeacherCpf()));
+
+        School school = schoolRepository.findById(dto.getSchoolCodInep())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "School not found with codInep: " + dto.getSchoolCodInep()));
+
         ClassStudant turma = new ClassStudant();
-        turma.setGrade(classStudantDTO.getGrade());
-        turma.setTeacher(classStudantDTO.getTeacher());
-        turma.setSchool(classStudantDTO.getSchool());
+        turma.setGrade(dto.getGrade());
+        turma.setTeacher(teacher);
+        turma.setSchool(school);
 
         return classStudantRepository.save(turma);
     }
+
 }
