@@ -1,7 +1,7 @@
 Desafio do Bootcamp da DIO, de criar uma API do zero
 
 Tecnologias Utilizadas
-Java 17+
+Java 21
 
 Spring Boot
 
